@@ -5,8 +5,8 @@
 
 'use strict';
 
+const { CronEngine, CronSchedule } = require('../index.js');
 const { localDateTimeString } = require('./util.js');
-const { CronEngine, CronSchedule } = require('../lib/index.js');
 
 // Return the local time in format "hh:mm:ss.zzz"
 const localTimeString = (date) => localDateTimeString(date).slice(11, 23);

@@ -5,8 +5,8 @@
 
 'use strict';
 
+const { CronSchedule } = require('../index.js');
 const { localDateTimeString, localDayString } = require('./util.js');
-const { CronSchedule } = require('../lib/index.js');
 
 /**
  * Return the date/time representation in local time,
