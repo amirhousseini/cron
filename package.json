@@ -1,0 +1,20 @@
+{
+  "name": "cron",
+  "version": "1.0.0",
+  "description": "Node.js implementation of a cron service",
+  "main": "index.js",
+  "scripts": {
+    "testCronSchedule": "node test/testCronSchedule.js",
+    "testCronEngine": "node test/testCronEngine.js"
+  },
+  "keywords": [
+    "cron"
+  ],
+  "author": "Amir Housseini",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/amirhousseini/cron/issues"
+  },
+  "homepage": "https://github.com/amirhousseini/cron#readme"
+}
