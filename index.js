@@ -1,10 +1,9 @@
 /**
- * This module implements a Cron service.
+ * This module implements a cron-like service.
  * It exports two classes: CronSchedule and CronEngine.
  * CronEngine is the actual service.
- * CronSchedule is the parsed representation of a cron expression
- * as described in GNU's crontab specifications.
- * (see https://www.gnu.org/software/mcron/manual/html_node/Crontab-file.html).
+ * CronSchedule is the parsed representation of a cron schedule expression as specified
+ * by GNU's crontab (see https://www.gnu.org/software/mcron/manual/html_node/Crontab-file.html).
  */
 
 'use strict';
