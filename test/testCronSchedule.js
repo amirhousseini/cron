@@ -1,9 +1,9 @@
-'use strict';
-
 /**
  * Module to test the class CronSchedule and illustrate its usage.
  * It is NOT a proper unit test.
  */
+
+'use strict';
 
 const { localDateTimeString, localDayString } = require('./util.js');
 const { CronSchedule } = require('../lib/index.js');

@@ -1,7 +1,7 @@
 {
   "name": "cron",
   "version": "1.0.0",
-  "description": "Node.js implementation of a cron service",
+  "description": "Implementation of a cron-like service",
   "main": "index.js",
   "scripts": {
     "testCronSchedule": "node test/testCronSchedule.js",

@@ -1,9 +1,9 @@
-'use strict';
-
 /**
  * Utility functions.
  */
- 
+
+'use strict';
+
 /**
  * Format a number to a string, padded with leading zeros up to a given length.
  * @param {Number} num Number to format

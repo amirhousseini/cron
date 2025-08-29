@@ -1,9 +1,9 @@
-'use strict';
-
 /**
  * Module to test the class CronEngine and illustrate its usage.
  * It is NOT a proper unit test.
  */
+
+'use strict';
 
 const { localDateTimeString } = require('./util.js');
 const { CronEngine, CronSchedule } = require('../lib/index.js');
@@ -25,10 +25,10 @@ async function immediateStart() {
 
     let schedule;
     // Execute every single minute a function in the same thread
-    cron.register(schedule, SampleTaskFunction, ['execution in same thread', 'more-data']);
+    cron.register(schedule, SampleTaskFunction, 'execution in same thread');
     // Execute every odd minute a module task in a worker thread
     schedule = new CronSchedule('1-59/2 * * * *');
-    cron.register(schedule, SampleTaskModule, ['execution in worker thread', 'more-data']);
+    cron.register(schedule, SampleTaskModule, { type: 'execution in worker thread', arg: 'more-data' });
     // Execute every 5 seconds a module task in a child process
     schedule = '*/5 * * * *'
     cron.register(schedule, SampleTaskModule, ['execution in forked process', 'more-data'], { fork: true });
@@ -45,10 +45,10 @@ async function delayedStart() {
 
     let schedule;
     // Execute every single minute a function in the same thread
-    cron.register(schedule, SampleTaskFunction, ['execution in same thread', 'more-data']);
+    cron.register(schedule, SampleTaskFunction, 'execution in same thread');
     // Execute every odd minute a module task in a worker thread
     schedule = new CronSchedule('1-59/2 * * * *');
-    cron.register(schedule, SampleTaskModule, ['execution in worker thread', 'more-data']);
+    cron.register(schedule, SampleTaskModule, { type: 'execution in worker thread', arg: 'more-data' });
     // Execute every 5 seconds a module task in a child process
     schedule = '*/5 * * * *'
     cron.register(schedule, SampleTaskModule, ['execution in forked process', 'more-data'], { fork: true });
