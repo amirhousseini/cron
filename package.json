@@ -1,11 +1,15 @@
 {
-  "name": "cron",
+  "name": "ah-cron",
   "version": "1.0.1",
   "description": "Implementation of a cron-like service",
   "main": "index.js",
   "scripts": {
     "testCronSchedule": "node test/testCronSchedule.js",
     "testCronEngine": "node test/testCronEngine.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amirhousseini/cron.git"
   },
   "keywords": [
     "cron"
