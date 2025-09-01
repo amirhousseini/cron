@@ -5,7 +5,7 @@
 
 'use strict';
 
-const { CronSchedule } = require('../index.js');
+const { CronSchedule } = require('..');
 const { localDateTimeString, localDayString } = require('./util.js');
 
 /**
@@ -28,8 +28,12 @@ const displayLocalDateTime = (date = new Date()) =>
 function test(expression, ...sampleDates) {
     try {
         let cs = new CronSchedule(expression);
-        let trimmedExpression = expression !== cs.expression() ? `  =>  "${cs.expression()}"` : "";
-        console.log(`"${expression}"${trimmedExpression}`);
+        if (typeof expression === 'string') {
+            let trimmedExpression = expression !== cs.expression() ? `  =>  "${cs.expression()}"` : "";
+            console.log(`"${expression}"${trimmedExpression}`);
+        } else {
+            console.log(`"${cs.expression()}"`);
+        }
         console.log(JSON.stringify(cs.values()));
         console.log(`Next schedule is ${displayLocalDateTime(cs.nextMatch())}`);
         sampleDates.map(d => new Date(d))

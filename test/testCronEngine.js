@@ -5,17 +5,20 @@
 
 'use strict';
 
-const { CronEngine, CronSchedule } = require('../index.js');
+const { CronEngine, CronSchedule } = require('..');
 const { localDateTimeString } = require('./util.js');
+
+// Duration of the test in minutes
+const Duration = 18;
 
 // Return the local time in format "hh:mm:ss.zzz"
 const localTimeString = (date) => localDateTimeString(date).slice(11, 23);
-// Log the arguments passed by the cron engine
+
+// The sample tasks simply log the arguments passed by the cron engine
 const SampleTaskFunction = (id, schedule, time, data) =>
     console.log(`"${schedule}"`, 'task', id, '->', localTimeString(time), data);
 const SampleTaskModule = './sampleTask.js';
 const SampleCrontab = './sampleCrontab';
-const Duration = 18;    // minutes
 
 async function immediateStart() {
     console.log('immediate start');
@@ -41,7 +44,7 @@ async function immediateStart() {
 async function delayedStart() {
     console.log('delayed start');
 
-    let cron = new CronEngine(true);
+    let cron = new CronEngine({ delayStart: true });
 
     let schedule;
     // Execute every single minute a function in the same thread
@@ -74,7 +77,7 @@ async function immediateStartWithCrontab() {
 async function delayedStartWithCrontab() {
     console.log('delayed start with crontab file');
 
-    let cron = new CronEngine(SampleCrontab, true);
+    let cron = new CronEngine(SampleCrontab, { delayStart: true });
 
     console.log(cron.start() ? `started at ${localTimeString()}` : 'already started');
 

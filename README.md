@@ -31,7 +31,7 @@ See test/testCronSchedule.js and test/testCronEngine.js.
 ```sh
 $ npm run testCronEngine
 
-> cron@1.0.0 testCronEngine
+> cron@1.0.1 testCronEngine
 > (cd test; node testCronEngine.js)
 
 immediate start
@@ -180,7 +180,7 @@ stopped at 20:37:06.754
 
 $ npm run testCronSchedule
 
-> cron@1.0.0 testCronSchedule
+> cron@1.0.1 testCronSchedule
 > node test/testCronSchedule.js
 
 Now is 2025-08-29T19:19:38.491+02:00 (Fri)

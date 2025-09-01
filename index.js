@@ -8,6 +8,7 @@
 
 'use strict';
 
+const { homedir } = require('node:os');
 const fs = require('node:fs');
 const { setTimeout: setTimeoutPromise } = require('node:timers/promises');
 const { fork } = require('node:child_process');
@@ -87,7 +88,7 @@ class CronSchedule {
     constructor(cronExpr) {
         cronExpr ||= DefaultCronExpression;
         if (typeof cronExpr !== 'string') {
-            throw new Error(`Invalid cron schedule expression: ${cronExpr}`);
+            throw new TypeError('cronExpr must be a string');
         }
         // Trim the expression by removing leading and trailing spaces,
         // and squeezing sequences of blanks to single space characters
@@ -279,26 +280,67 @@ class CronSchedule {
  */
 class CronEngine {
 
+    #searchPaths;
     #counter = 0;
     #jobs = new Map();
     #timer;
     
     /**
      * Create a CronEngine object.
+     * The option "delayStart" is a flag specifying wheter the background process starts immediately.
+     * The option "paths" provide supplemental search paths for looking up modules and crontab files.
+     * A search path can be a sub-directory name, a relative path, or absolute path.
+     * Relative paths are resolved against the current working directory and aginst the module path.
+     * The main path and the home directory are automatically added to the search paths.
      * @constructor
      * @param {String} crontabPath Optional path of a crontab file.
-     * @param {Boolean} delayStart Flag requesting to delay the start if set to true.
+     * @param {Object} options Options.
      * @throws Error if a specified crontab file does not exist, cannot be access or has no entries.
      */
-    constructor(crontabPath, delayStart) {
-        if (arguments.length === 1 && typeof arguments[0] !== 'string') {
+    constructor(crontabPath, options = { delayStart: false, paths: [] }) {
+        if (arguments.length === 1 && typeof arguments[0] === 'object') {
             crontabPath = undefined;
-            delayStart = arguments[0];
+            options = arguments[0];
+        }
+        // Build the search paths as a copy of the standard search path, prepending the main path and the home directory 
+        this.#searchPaths = [require.main.path, homedir(), ...module.paths];
+        if (options?.paths) {
+            // Cast a string to an array of one string
+            let paths = Array.isArray(options.paths) ? options.paths : [ options.paths ];
+            // Resolve the added path against the main path and the home directory
+            paths.forEach(pathToAdd => {
+                this.#addSearchPath(resolve(homedir(), pathToAdd));
+                this.#addSearchPath(resolve(pathToAdd));
+            });
         }
         // Process the crontab file if provided
-        if (crontabPath) this.#processCrontab(crontabPath);
+        if (crontabPath) this.#processCrontab(this.#resolvePath(crontabPath, `File not found: ${crontabPath}`));
         // Start immediately unless specified not to
-        if (!delayStart) this.start();
+        if (!options?.delayStart) this.start();
+    }
+
+    /*
+     * Prepend the given path to the search path if not already present.
+     * @param {String} path Absolute path
+     */
+    #addSearchPath = (path) => { if (this.#searchPaths.indexOf(path) < 0) this.#searchPaths.unshift(path); };
+
+    /*
+     * Resolve a given path.
+     * @param {String} path Path to resolve. Must be a relative or an absolute file path.
+     * @param {String} errorMessage Optional error message used by exceptions
+     * @returns Error if the given path could not be resolved.
+     */
+    #resolvePath(path, errorMessage) {
+        try {
+            return require.resolve(path, { paths: this.#searchPaths })
+        } catch (err) {
+            if (err.code === 'MODULE_NOT_FOUND') {
+                throw new Error(errorMessage || err.message);
+            } else {
+                throw err;
+            }
+        }
     }
 
     /*
@@ -331,6 +373,9 @@ class CronEngine {
             // Parse the "command" string into an array of tokens.
             // A "command" is a module path followed by an array of optional string arguments.
             let [ task, ...data ] = parseCommand(commandStr);
+            // Resolve the task path
+            task = this.#resolvePath(task);
+            // Register the task with its schedule and optional data
             this.register(schedule, task, data, { fork: true });
         });
     } 
@@ -346,27 +391,29 @@ class CronEngine {
      * and optional data are passed as argument to the task.
      * It is possible to pass with options any options specified by "worker_threads.Worker"
      * and  "child_process.fork".
-     * @param {String|Schedule} schedule Cron schedule expression or CronSchedule object. Defaults to every minute.
+     * @param {String|CronSchedule} schedule Cron schedule expression or CronSchedule object. Defaults to every minute.
      * @param {Function|String} task Task to be executed. Can be either a function or a module path.
      * @param {*} data Optional data to be passed as supplemental argument to the task at execution time.
      * @param {Object} options Options.
      * @returns {Number} A unique job identification.
-     * @throws Error with diagnostics in case of invalid cron expression.
+     * @throws Error with diagnostics in case of invalid cron expression or if module path does not exist.
      */
-    register(schedule, task, data, options = {}) {
+    register(schedule = DefaultCronExpression, task, data, options = {}) {
+        // Validate schedule
+        if (typeof schedule === 'string') {
+            schedule = new CronSchedule(schedule);
+        } else if (!(typeof schedule === 'object' && schedule.constructor === CronSchedule)) {
+            throw new TypeError('Schedule must be a string or CronSchedule');
+        }
         // Validate task
         if (!task) {
             throw new Error("No task specified");
         }
         if (typeof task != 'function' && typeof task != 'string') {
-            throw new Error("Task must be either a function or a module path");
+            throw new TypeError('Task must be function or a string');
         }
-        if (typeof task == 'string' && !fs.existsSync(task)) {
-            throw new Error(`Invalid module path "${task}"`);
-        }
-        // Parse a schedule specified as cron expression
-        if (!schedule || typeof schedule === 'string') {
-            schedule = new CronSchedule(schedule);
+        if (typeof task === 'string') {
+            task = this.#resolvePath(task, `Invalid module path "${task}"`);
         }
         // Get the unique job identification by incrementing an internal counter
         let id = ++this.#counter;
@@ -376,15 +423,15 @@ class CronEngine {
     }
 
     /**
-     * Deregister a recurring task. 
+     * Deregister a recurring task. This does not abort an already running task.
      * @param {Number} jobId Unique job identification returned by the function schedule().
      * @returns {Boolean} true if the given task was scheduled and has been unscheduled, or false if no such task is scheduled.
      */
     deregister = (jobId) => this.#jobs.delete(jobId);
 
     /**
-     * Return the list of tasks sorted by their job id , i.e. by the time of their registration.
-     * @returns {Array<any>} Array of tuples with job id, cron expression, and optional data.
+     * Return the list of currently registered tasks sorted by their job id (i.e. the time of their registration).
+     * @returns {Array<any>} Array of tuples with job id, schedule expression, and data, and options.
      */
     registered = () =>
         [...this.#jobs.entries()]
@@ -452,7 +499,7 @@ class CronEngine {
     }
 
     /**
-     * Stop the cron immediately or after a specified delay.
+     * Stop the cron immediately or after a specified delay. This does not abort currently running tasks.
      * @param delay Optional delay in minutes.
      * @returns {Boolean|Promise} true if the cron was running and is now stopped, or false if it is already stopped.
      */
@@ -465,7 +512,7 @@ class CronEngine {
     }
 
     /**
-     * Boolean function returning whether the cron is running or not.
+     * Boolean function returning whether the cron is running (i.e. active) or not.
      * @returns {Boolean}
      */
     isRunning = () => this.#timer != null;

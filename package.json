@@ -1,11 +1,11 @@
 {
   "name": "cron",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Implementation of a cron-like service",
   "main": "index.js",
   "scripts": {
-    "testCronSchedule": "(cd test; node testCronSchedule.js)",
-    "testCronEngine": "(cd test; node testCronEngine.js)"
+    "testCronSchedule": "node test/testCronSchedule.js",
+    "testCronEngine": "node test/testCronEngine.js"
   },
   "keywords": [
     "cron"
