@@ -14,9 +14,9 @@ const tempFiles = [];
 
 /*
  * Register a temporary directory or file path in a given registry, returning the path registered.
- * @param path File path
- * @param registry Path array
- * @returns the path registered
+ * @param {string} path File path.
+ * @param {string} registry Path array.
+ * @returns {string} Returns the path passed as argument.
  */
 const register = (registry, path) => {
     registry.push(path);
@@ -25,9 +25,9 @@ const register = (registry, path) => {
 
 /**
  * Append some content to a given file. A new file is created if does not exist.
- * @param path File path
- * @param content Content to append; defaults to an empty string.
- * @returns the file path
+ * @param {string} path File path.
+ * @param {string} content Content to append; defaults to an empty string.
+ * @returns {string} Returns the file path passed as argument.
  */
 const appendContent = (path, content = '') => {
     appendFileSync(path, content, { flush: true });
@@ -37,6 +37,9 @@ const appendContent = (path, content = '') => {
 /**
  * Return a random name of a given size.
  * The default character set features the same characters used for representing numbers with radix 36.
+ * @param {number} size Number of character to return.
+ * @param {string} charset Optional character set; defaults to the decimal digits, lowercase, and uppercase english letters.
+ * @return {string} Returns a random name.
  */
 const tempName = (size, charset = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') => {
     let chars = [];
@@ -50,7 +53,8 @@ const tempName = (size, charset = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHI
  * Create a temporary sub-directory to a given directory, returning its absolute path.
  * The resulting name starts with a dot.
  * The sub-directory is registered for later removal. 
- * @param path Optional directory path; by default the current working directory
+ * @param {string} path Optional directory path; by default the current working directory.
+ * @return {string} Returns the absolute path of the path passed as argument.
  */
 const newTempDir = (path = cwd()) =>
     register(tempDirs, join(path, mkdtempSync('.')));
@@ -59,15 +63,16 @@ const newTempDir = (path = cwd()) =>
  * Create a temporary empty file in a given directory, returning its absolute path.
  * The resulting name starts with a dot.
  * The file is registered for later removal. 
- * @param path Optional directory path; by default the current working directory
+ * @param {string} path Optional directory path; by default the current working directory.
+ * @return {string} Returns the absolute path of the path passed as argument.
  */
 const newTempFile = (path = cwd()) =>
     register(tempFiles, appendContent(join(path, '.' + tempName(6))));
 
 /**
- * Remove a given file or a directoy, recursively and forcibly by default
- * @param path File or directory path
- * @param options Options (@see node:fs.rmSync())
+ * Remove a given file or a directoy, recursively and forcibly by default.
+ * @param {string} path File or directory path.
+ * @param {Object} options Options (@see node:fs.rmSync() ).
  */
 const remove = (path, options = { recursive: true, force: true }) => {
     options = Object.assign({}, { recursive: true, force: true }, options);

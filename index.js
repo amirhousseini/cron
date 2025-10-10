@@ -109,9 +109,9 @@ class CronSchedule {
     /**
      * Construct a CronSchedule object by parsing the given cron schedule expression.
      * @constructor
-     * @param {String} expression Optional cron schedule expression. Defaults to every minute.
-     * @throws TypeError if expression is not a string.
-     * @throws CronScheduleError with diagnostics when parsing failure.
+     * @param {string} expression Optional cron schedule expression. Defaults to every minute.
+     * @throws {TypeError} if expression is not a string.
+     * @throws {CronScheduleError} if syntax error.
      */
     constructor(expression = DefaultSchedule) {
         if (typeof expression !== 'string') {
@@ -122,8 +122,8 @@ class CronSchedule {
 
     /*
      * Parse the cron schedule expression.
-     * @param {String} expression Cron schedule expression.
-     * @throws CronScheduleError with diagnostics when parsing failure.
+     * @param {string} expression Cron schedule expression.
+     * @throws {CronScheduleError} if syntax error.
      */
     #parse(expression) {
         // Trim the expression by removing leading and trailing spaces,
@@ -239,7 +239,7 @@ class CronSchedule {
 
     /**
      * Return the cron schedule expression.
-     * @returns {String} 
+     * @returns {string} 
      */
     get expression() {
         return this.#expression;
@@ -247,7 +247,7 @@ class CronSchedule {
 
     /**
      * Return the alias if the expression was specified as alias, undefined if not.
-     * @returns {String} 
+     * @returns {string} 
      */
     get alias() {
         return this.#alias;
@@ -270,8 +270,8 @@ class CronSchedule {
 
     /**
      * Boolean function returning true if the given timestamp or date matches this cron schedule.
-     * @param {Date|Number} date Optional date/time or timestamp to check; defaults to the current date/time
-     * @returns {Boolean}
+     * @param {Date|number} date Optional date/time or timestamp to check; defaults to the current date/time.
+     * @returns {boolean}
      */
     matches(date = Date.now()) {
         // Get the date corresponding to the argument
@@ -286,10 +286,12 @@ class CronSchedule {
     }
 
     /*
-     * Helper boolean function returning true if the given date matches any reverse day-of-month values
+     * Boolean function returning true if the given date matches any reverse day-of-month values
      * of this cron schedule.
+     * @param {Date|number} date Optional date/time or timestamp to check; defaults to the current date/time.
+     * @return {boolean}
      */
-    #matchesReverse(date) {
+    #matchesReverse(date = Date.now()) {
         for (let offset of this.#values[Field.ReverseDayOfMonth]) {
             // Clone the given date to be able to mutate it
             let workDate = new Date(date);
@@ -303,8 +305,8 @@ class CronSchedule {
 
     /**
      * Return the next timestamp matching this schedule.
-     * @param {Date|Number} from Optional date/time or timestamp from when to check; defaults to the current date/time
-     * @return {Number}
+     * @param {Date|number} from Optional date/time or timestamp from when to check; defaults to the current date/time.
+     * @return {number} Return the number of milliseconds since Epoch.
      */
     nextMatch(from = Date.now()) {
         // Get the timestamp corresponding to the argument
@@ -318,7 +320,7 @@ class CronSchedule {
 }
 
 /**
- * Custom error thrown by FileLocator when file path fail to resolve. 
+ * Custom error class used by FileLocator when a file path cannot be resolved. 
  */
 class ResolutionError extends Error {
   constructor(message, options) {
@@ -340,9 +342,9 @@ class FileLocator {
      * They are resolved against the primordial paths, which consist of the standard
      * location paths, extended by the home directory, the current working directory,
      * and the main path.
-     * The supplemntal paths can also take the form of an OS path specification,
-     * with several paths delimited an OS specific character.
-     * @param {...any} paths Supplemental paths.
+     * The supplemental paths can also take the form of OS path specifications,
+     * with multiple paths delimited by an OS specific separator character.
+     * @param {Array<string>} paths Supplemental paths.
      */
     constructor(...paths) {
         this.#paths = (paths?.length ? paths.flat() : []);
@@ -350,7 +352,7 @@ class FileLocator {
     }
 
     /*
-     * Build the search path.
+     * Build the resolution paths.
      */
     #build() {
         // Build the primordial location paths.
@@ -377,23 +379,22 @@ class FileLocator {
     
     /**
      * Return the list of resolution paths.
-     * @returns Array<string>
+     * @returns {Array<string>} Return the list of paths used for resolution.
      */
     get list() { return this.#list };
 
     /*
      * Resolve a file path (cannot be a directory path).
-     * @param {String} path File path to resolve.
-     *   It can be a simple name, or a relative or an absolute path.
-     * @param {String} message Alternative message to use in exceptions with code MODULE_NOT_FOUND, instead of the default.
-     * @returns The resulting absolute path.
-     * @throws ResolutionError if the file path could not be resolved.
-     * @throws Error if any other error occurs.
+     * @param {string} path File path to resolve. Can be a simple name, a relative, or an absolute path.
+     * @param {string} message Alternative message to use in exceptions with code MODULE_NOT_FOUND, instead of the default.
+     * @returns {string} Return the absolute path.
+     * @throws {ResolutionError} if the file path could not be resolved.
+     * @throws {Error} if any other error occurs.
      */
     resolve(path, message) {
         // Transform a simple name into a relative path
         // (because require.resolve only supports paths, not simple names)
-        if (path?.indexOf(pathSeparator) < 0) {
+        if (!path.startsWith('.' + pathSeparator) && !path.startsWith('..' + pathSeparator) && !path.startsWith(pathSeparator)) {
             path = '.' + pathSeparator + path;
         }
         // Resolve the file path
@@ -433,12 +434,13 @@ class CronEngine {
     
     /**
      * Create a CronEngine object.
+     * The option "delayStart" specifies whether the cron engine must start immediately or not.
      * @constructor
-     * @param {boolean} delayStart Flag specifying whether the background process starts immediately or not.
+     * @param {Object} options Options.
      */
-    constructor(delayStart) {
-        // Start immediately unless specified not to
-        if (!delayStart) this.start();
+    constructor(options = { delayStart: false }) {
+        options = Object.assign({}, { delayStart: false }, options);
+        if (!options.delayStart) this.start();
     }
     
     /**
@@ -452,14 +454,14 @@ class CronEngine {
      * With external modules all data are stringified before being passed as arguments.
      * It is also possible to pass as options the ones specified by "node:worker_threads.Worker"
      * and "node:child_process.fork".
-     * @param {String|CronSchedule} schedule Cron schedule expression or CronSchedule object. Defaults to every minute.
-     * @param {Function|String} task Task to be executed. Is either a function or a module path.
-     * @param {any} args Optional arguments to be passed alongside the standard arguments to the task at execution time.
+     * @param {string|CronSchedule} schedule Cron schedule expression or CronSchedule object. Defaults to every minute.
+     * @param {Function|string} task Task to be executed. Is either a function or a module path.
+     * @param {Array<any>} args Optional arguments to be passed alongside the standard arguments to the task at execution time.
      * @param {Object} options Options.
-     * @returns {Number} The unique job identification.
-     * @throws TypeError if an argument has an invalid type.
-     * @throws CronScheduleError if schedule is invalid.
-     * @throws Error if a module path is not found.
+     * @returns {number} Return the unique job identification.
+     * @throws {TypeError} if an argument has an invalid type.
+     * @throws {CronScheduleError} if schedule is invalid.
+     * @throws {Error} if a module path is not found.
      */
     registerJob(schedule = DefaultSchedule, task, args, options = {}) {
         // Validate schedule
@@ -484,8 +486,8 @@ class CronEngine {
 
     /**
      * Deregister a specific job. This does not abort a corresponding already running task.
-     * @param {Number} jobId Unique job identification returned by the function schedule().
-     * @returns {Boolean} true if the given job was registered and has been deregistered.
+     * @param {number} jobId Unique job identification returned by the function registerJob().
+     * @returns {boolean} Return true if the given job was registered and is now deregistered.
      */
     deregisterJob = (jobId) => jobId && jobId > 0 && this.#jobs.delete(jobId);
 
@@ -496,7 +498,7 @@ class CronEngine {
 
     /**
      * Return the list of currently registered tasks sorted by their job id (i.e. the time of their registration).
-     * @returns {Array<any>} Array of tuples with job id, schedule expression, task, arguments, and options.
+     * @returns {Array<Object>} Return an array of objects with job id, schedule expression, task, arguments, and options.
      */
     listJobs = () =>
         [...this.#jobs.entries()]
@@ -507,7 +509,7 @@ class CronEngine {
     /*
      * Select tasks due for execution by comparing their schedule expression to the target time specified,
      * then execute them in the order of their registration time.
-     * @param {Number} time Target time in milliseconds; defaults to the current time.
+     * @param {number} time Target time in milliseconds; defaults to the current time.
      */
     #executeDueTasks = (time = Date.now()) => {
         [...this.#jobs.entries()]
@@ -533,11 +535,11 @@ class CronEngine {
     }
 
     /*
-     * Recursively set a timer to expire after every plain minute and execute tasks due
+     * Recursively set a timer to expire after every plain minute and execute tasks due,
      * passing the target expiration time as argument.
      * The function must be initially called without arguments.
-     * @param delay Timer delay
-     * @param expirationTime Expiration timestamp
+     * @param {number} delay Timer delay in milliseconds
+     * @param {number} expirationTime Expiration timestamp in milliseconds
      */
     #setTimer(delay, expirationTime) {
         if (!arguments.length) {
@@ -558,7 +560,7 @@ class CronEngine {
 
     /**
      * Start the cron engine.
-     * @returns {Boolean} true if the cron engine was stopped and is now running.
+     * @returns {boolean} Return true if the cron engine was stopped and is now running.
      */
     start() {
         if (this.#timer) return false;
@@ -568,9 +570,9 @@ class CronEngine {
 
     /**
      * Stop the cron engine. Currently running tasks in forked processes are not aborted.
-     * @returns {Boolean} true if the cron engine was running and is now stopped.
+     * @returns {boolean} Return true if the cron engine was running and is now stopped.
      */
-    stop(delay) {
+    stop() {
         if (!this.#timer) return false;
         clearTimeout(this.#timer);
         this.#timer = undefined;
@@ -578,8 +580,8 @@ class CronEngine {
     }
 
     /**
-     * Boolean function returning whether the cron is running (i.e. active) or not.
-     * @returns {Boolean}
+     * Boolean function returning whether the cron engine is running (i.e. active) or not.
+     * @returns {boolean} Return true if the cron engine is currently running
      */
     get isRunning() { return this.#timer != undefined; }
 
@@ -601,14 +603,14 @@ class CrontabService {
 
     /**
      * Create a CrontabService object.
-     * The option "delayStart" specifies whether the service starts immediately or not.
+     * The option "delayStart" specifies whether the service must start immediately or not.
      * The option "locationPaths" provides supplemental paths for looking up the crontab file and the module files.
      * The option "monitorCrontab" specifies whether the crontab file should be monitored for changes,
      * reloading it when it has changed.
      * @constructor
-     * @param {String} path Path of the crontab file.
+     * @param {string} path Path of the crontab file.
      * @param {Object} options Options.
-     * @throws Error if the specified crontab file does not exist, cannot be access, has no entries or has errors.
+     * @throws {Error} if the specified crontab file does not exist, cannot be access, has no entries or has errors.
      */
     constructor(path, options = { delayStart: false, locationPaths: undefined, monitorCrontab: true }) {
         // Set options defaults
@@ -618,7 +620,7 @@ class CrontabService {
             // Resolve the crontab path
             this.#path = this.#locator.resolve(path);
             // Create the cron engine
-            this.#engine = new CronEngine(true);
+            this.#engine = new CronEngine({ delayStart: true });
             // Load the crontab file
             this.#handleCrontabFile();
             // Activate the crontab file monitoring if requested
@@ -649,7 +651,7 @@ class CrontabService {
      * If the crontab file has been deleted, deregistered all jobs.
      * If errors occur, they are written to standard error, and currently registered
      * jobs remain active.
-     * @param eventType Event type as notified from the monitoring activity.
+     * @param {string} eventType Event type as notified from the monitoring activity.
      *  Do not specify an event type to load the crontab file initially.
      */
     #handleCrontabFile(eventType) {
@@ -680,6 +682,7 @@ class CrontabService {
     
     /*
      * Register the jobs parsed from the crontab file.
+     * @param {Array<Array<any>>} entries The entries returned by parseCrontabFile().
      */
     #registerAllJobs(entries) {
         // Defensively deregister all jobs
@@ -716,7 +719,7 @@ class CrontabService {
 
     /**
      * Start the service.
-     * @returns {Boolean} true if the service was stopped and is now running.
+     * @returns {boolean} Return true if the service was stopped and is now running.
      */
     start() {
         logMessage("Start service");
@@ -731,7 +734,7 @@ class CrontabService {
 
     /**
      * Stop the service. Currently running tasks are not aborted.
-     * @returns {Boolean} true if the service was running and is now stopped.
+     * @returns {boolean} Return true if the service was running and is now stopped.
      */
     stop() {
         logMessage("Stop service");
@@ -747,12 +750,17 @@ class CrontabService {
 
     /**
      * Boolean function returning whether the service is running (i.e. active) or not.
-     * @returns {Boolean}
+     * @returns {boolean} Return true if the service is currently running.
      */
     get isRunning() { return this.#engine !== undefined && this.#engine.isRunning; }
 
 }
 
+/*
+ * Return the local date/time string of the specified date in the format "YYYY-MM-DD hh:mm:ss.iii".
+ * @param {Date|number} date Optioanl Date or number of milliseconds since Eapoch: defaults to the current date.
+ * @return {string} The formatted local date/time.
+ */ 
 function localDateTimeString(date = new Date()) {
     const fmt = (num = 0, siz = 2) => num.toString().padStart(siz, "0");
     // Get the date corresponding to the argument
@@ -764,7 +772,7 @@ function localDateTimeString(date = new Date()) {
 
 /**
  * Log a message to standard output.
- * @param msg Message to log
+ * @param {string} msg Message to log.
  */
 function logMessage(msg) {
     stdout.write(`${localDateTimeString()} - ${msg}`);
@@ -773,8 +781,8 @@ function logMessage(msg) {
 
 /**
  * Log an error to standard error.
- * @param msg Optional message to log
- * @param err Optional error object or object with similar properties 
+ * @param {string} msg Optional message to log.
+ * @param {Error|Object} err Optional error object or object with similar properties.
  */
 function logError(msg, err) {
     if (!arguments.length) {
@@ -798,9 +806,9 @@ function logError(msg, err) {
  *  - {string} schedule expression
  *  - {string} optional flag
  *  - {string} module path
- *  - {Array<any>} optional arguments
+ *  - {Array<any>} optional arguments.
  * @param {string} path File path.
- * @throws Error if the file does not exist or could not be read.
+ * @throws {Error} if the file does not exist or could not be read.
  * @returns {Promise<Array<Array<any>>>} Promise of an array of parsed entries.
  */
 async function parseCrontabFile(path) {
@@ -850,14 +858,14 @@ async function parseCrontabFile(path) {
  *  - {string} schedule expression
  *  - {string} optional flag
  *  - {string} module path
- *  - {Array<any>} optional arguments
+ *  - {Array<any>} optional arguments.
  * @param {Array<any>} entry Entry
  * @param {FileLocator} fileLocator Optional file locator for resolving file paths.
- * @return The entry with the schedule expression replaced by a CronSchedule object,
+ * @return {Objec} The entry with the schedule expression replaced by a CronSchedule object,
  *  and the path resolved against the file locator.
- * @throws CronScheduleError if the schedule expression is invalid
- * @throws ResolutionError if the module is not found
- * @throws Error if the fork flag is invalid
+ * @throws {CronScheduleError} if the schedule expression is invalid.
+ * @throws {ResolutionError} if the module is not found.
+ * @throws {Error} if the fork flag is invalid.
  */
 function validateCrontabEntry(entry, fileLocator = new FileLocator()) {
     let [ lineNbr, schedule, flag, path, args ] = entry;
@@ -876,9 +884,9 @@ function validateCrontabEntry(entry, fileLocator = new FileLocator()) {
  * Parse and validate a crontab file, and write the result to standard output.
  * The option "locationPaths" provides supplemental paths for looking up the crontab file and the module files.
  * The main path, the current directory, and the home directory are automatically part of the location paths.
- * @param {String} path Path of the crontab file.
+ * @param {string} path Path of the crontab file.
  * @param {Object} options Options.
- * @return Status code 0 for success, 1 for failure
+ * @return {number} Status code 0 for success, 1 for failure.
  */
 function validateCrontabFile(path, options = { locationPaths: undefined }) {
     // Set options defaults
@@ -931,9 +939,9 @@ function validateCrontabFile(path, options = { locationPaths: undefined }) {
  * Example:
  * Input: './sampleTask.js "arg\\"1\\" " "arg 2"'
  * Output: [ './sampleTask.js', 'arg"1" ', 'arg 2' ]
- * @param {String} input Command as text.
- * @returns {Array<String>} Array of terms
- * @throws Error if quotes are unbalanced or escape sequences have invalid characters
+ * @param {string} input Command as text.
+ * @returns {Array<string>} Array of terms.
+ * @throws {Error} if quotes are unbalanced or escape sequences have invalid characters.
  */
 function parseCommandLine(input) {
 
@@ -954,7 +962,7 @@ function parseCommandLine(input) {
 
     /*
      * Swith the state of the state machine, making the current state as the previous state.
-     * @param newState The new state to switch to
+     * @param {string} newState The new state to switch to.
      */
     const switchState = (newState) => {
         if (newState !== State.hexCode) prevState = state;
@@ -962,9 +970,9 @@ function parseCommandLine(input) {
     }
 
     /*
-     * Return the character corresponding to the single letter used in escape sequence (like "\t")
-     * @param c The single character appearing after the backslash character
-     * @returns The corresponding character
+     * Return the character corresponding to the single letter used in escape sequence (like "\t").
+     * @param  östring} c The single character appearing after the backslash character.
+     * @returns {string} The corresponding character.
      */
     const letterToChar = (c) => {
         // Mappings to corresponding ASCII codes
@@ -985,7 +993,7 @@ function parseCommandLine(input) {
 
     /*
      * Initialize a new code.
-     * @param c The type of code: x for UTF-16, u for Unicode codes
+     * @param {string} c The type of code: x for UTF-16, u for Unicode codes
      */
     const newCode = (c) => {
         code.length = 0;
@@ -994,9 +1002,9 @@ function parseCommandLine(input) {
 
     /*
      * Convert the characters accumulated in the code variables to a character.
-     * @param radix Optional radix to use; defaults to 16
-     * @returns Character corresponding to the code point
-     * @throws Error if code contains an invalid character
+     * @param {number} radix Optional radix to use; defaults to 16.
+     * @returns {string} Character corresponding to the code point.
+     * @throws {Error} if code contains an invalid character.
      */ 
     const codeToChar = (radix = 16) => {
         let n = 0;
@@ -1135,14 +1143,15 @@ function parseCommandLine(input) {
 }
 
 /**
- * Monitor a given file.
+ * Monitor a given file. The provided callback is called every time a change to the file occur.
+ * This can be changes to the content of the file, or changes to the existence of the file.
  * @param {string} filePath Path of the file to monitor.
  *  The parent directory must exist, but the file may be missing.
- * @param {function} callback Callback function called on file changes.
+ * @param {Function} callback Callback function called on file changes.
  *  The event type and the file path are passed as arguments.
  *  The event types are "create", "modify", and "delete".
- * @param {AbortSignal} signal Optional abort signal for aborting the operation
- * @throws Error if the parent directory is moved or deleted.
+ * @param {AbortSignal} signal Optional abort signal for aborting the operation.
+ * @throws {Error} if the parent directory is moved or deleted.
  */
 async function monitorFile(filePath, callback, signal) {
 

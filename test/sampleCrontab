@@ -1,8 +1,0 @@
-# This is a comment for the first task
-* * * * *       ./sampleTask.js
-
-# This is a comment for the second task
-*/5 * * * *     ./sampleTask.js 'execution in forked process' more-data-2
-
-# This is a comment for the third task
-1-59/2 * * * *  ./sampleTask.js "execution in forked process" more-data-3

@@ -19,7 +19,7 @@ console.log('"%s" task %d -> %s %s', schedule, id, localTimeString(time), data);
 /**
  * Return the ISO time representation in local time according to the environment variable TZ.
  * @param {any} date Optional date or timestamp; default to the current date/time.
- * @returns {String} hh:mm:ss.zzz
+ * @returns {String} hh:mm
  */
 function localTimeString(date = Date.now()) {
     const fmt = (nbr = 0, len = 2) => nbr.toString().padStart(len, "0");
@@ -49,7 +49,7 @@ const TaskFunction = Function("id", "schedule", "time", "data", DemoTaskCode);
 
 // Test suites
 
-suite("Unit tests of class CronEngine - job management", { skip: false }, () => {
+suite("Unit tests of class 'CronEngine' - Job management", { skip: false }, () => {
 
     let engine, taskModules = [];
     let validJobs, invalidJobs;
@@ -59,7 +59,7 @@ suite("Unit tests of class CronEngine - job management", { skip: false }, () => 
      * and valid and invalid jobs
      */
     before(() => {
-        engine = new CronEngine(true);
+        engine = new CronEngine({ delayStart: true });
         for (let i = 0; i < 2; i++) {
             let path = newTempFile(newTempDir());
             appendContent(path, DemoModuleCode);
@@ -138,7 +138,7 @@ suite("Unit tests of class CronEngine - job management", { skip: false }, () => 
     });
 
     test("De-registration of all jobs", { skip: false }, () => {
-        expect(engine.deregisterJob()).to.be.undefined;
+        expect(engine.deregisterAllJobs()).to.be.undefined;
         // Verify list of jobs is empty
         let jobs = engine.listJobs();
         expect(jobs.length).to.equal(0);
@@ -146,7 +146,7 @@ suite("Unit tests of class CronEngine - job management", { skip: false }, () => 
 
 });
 
-suite("Unit tests of class CronEngine - job execution", { skip: false }, () => {
+suite("Unit tests of class 'CronEngine' - Job execution", { skip: false }, () => {
 
     let taskModules = [], jobs;
 
@@ -171,6 +171,11 @@ suite("Unit tests of class CronEngine - job execution", { skip: false }, () => {
         ];
     });
 
+    /*
+     * Purge temporary directories and files
+     */
+    after(() => purge());
+
     // Unit tests
 
     test("Is running by default", { skip: false }, () => {
@@ -179,14 +184,14 @@ suite("Unit tests of class CronEngine - job execution", { skip: false }, () => {
         engine.stop();
     });
 
-    test("Is running if started with delayStart set to false", { skip: false }, () => {
-        let engine = new CronEngine(false);
+    test("Is running if started with option delayStart set to false", { skip: false }, () => {
+        let engine = new CronEngine({ delayStart: false });
         expect(engine.isRunning).to.be.true;
         engine.stop();
     });
 
-    test("Is not running if started with delayStart set to true", { skip: false }, () => {
-        let engine = new CronEngine(true);
+    test("Is not running if started with option delayStart set to true", { skip: false }, () => {
+        let engine = new CronEngine({ delayStart: true });
         expect(engine.isRunning).to.be.false;
     });
 
@@ -197,7 +202,10 @@ suite("Unit tests of class CronEngine - job execution", { skip: false }, () => {
             let options = i === 1 ? { fork: true } : undefined;
             engine.registerJob(jobs[i][0], jobs[i][1], jobs[i][2], options);
         }
-        engine.stop(11).then(() => purge());
+        setTimeout(() => {
+            engine.stop();
+            purge()
+        }, 18 * 60 * 1000);
     });
 
 });
