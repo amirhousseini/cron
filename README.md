@@ -1,5 +1,6 @@
 # cron
-*** OUTDATED ***
+## *** OUTDATED ***
+
 Implementation of a cron-like service.
 The module exports two classes: CronSchedule and CronEngine.
 CronSchedule is the parsed representation of a cron schedule expression as specified by GNU's crontab
