@@ -1,10 +1,12 @@
 {
   "name": "ah-cron",
-  "version": "2.0.1",
+  "version": "2.0.3",
   "description": "Implementation of a cron-like service",
   "main": "index.js",
   "scripts": {
-    "test": "node --test '**/*.test.js'"
+    "test": "node --test '**/*.test.js'",
+    "testService": "node 'tests/CrontabService.run.js'",
+    "testValidate": "node 'tests/validateCrontabFile.run.js' samples/sampleCrontab"
   },
   "repository": {
     "type": "git",
@@ -21,6 +23,6 @@
   },
   "homepage": "https://github.com/amirhousseini/cron#readme",
   "devDependencies": {
-    "chai": "^6.0.1"
+    "chai": "^6.2.0"
   }
 }

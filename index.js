@@ -355,8 +355,11 @@ class FileLocator {
      * Build the resolution paths.
      */
     #build() {
-        // Build the primordial location paths.
-        let primordials = new Set([ homedir(), cwd(), require.main.path, ...module.paths]);
+        // Build the primordial location paths
+        let primordials = new Set([ homedir(), cwd(), require.main?.path, ...module.paths]);
+        // Remove defensively possibly null and undefined members.
+        primordials.delete(null);
+        primordials.delete(undefined);
 
         // Collect the supplemental paths to be added to the location paths as a set,
         // filtering out undefined or empty paths, and finally trimming paths.
@@ -753,6 +756,19 @@ class CrontabService {
      * @returns {boolean} Return true if the service is currently running.
      */
     get isRunning() { return this.#engine !== undefined && this.#engine.isRunning; }
+
+    /**
+     * Run a CrontabService based on the two environment variables CRONTAB_PATH and LOCATION_PATHS. 
+     */
+    static run() {
+        let crontabPath = process.env.CRONTAB_PATH;
+        if (!crontabPath) {
+            logError("Missing required environment variable CRONTAB_PATH");
+            return;
+        }
+        let locationPaths = process.env.LOCATION_PATHS;
+        new CrontabService(crontabPath, { locationPaths });
+    }
 
 }
 
