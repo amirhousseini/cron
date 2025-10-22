@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node --test '**/*.test.js'",
     "testService": "node 'tests/CrontabService.run.js'",
-    "testValidate": "node 'tests/validateCrontabFile.run.js' samples/sampleCrontab"
+    "testValidate": "node 'tests/validateCrontabFile.run.js' samples/sampleCrontab",
+    "buildImage": "docker build --no-cache -f docker/Dockerfile -t plumpudding/ah-cron docker"
   },
   "repository": {
     "type": "git",

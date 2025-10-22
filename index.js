@@ -823,6 +823,23 @@ function logError(msg, err) {
  *  - {string} optional flag
  *  - {string} module path
  *  - {Array<any>} optional arguments.
+ * 
+ * Crontab entries must have the following format:
+ * 
+ *      +----------------------------------  Schedule expression
+ *      |       +--------------------------  Optional fork flag
+ *      |       |         +----------------  Module path
+ *      |       |         |            +--   Optional arguments
+ *      |       |         |            |
+ *  ---------   -   -------------   --------
+ *  * * * * *   F   ./module/path   args ...
+ *  | | | | |
+ *  | | | | +--  Week
+ *  | | | +----  Month
+ *  | | +------  Day
+ *  | +--------  Hours
+ *  +----------  Minutes
+ *
  * @param {string} path File path.
  * @throws {Error} if the file does not exist or could not be read.
  * @returns {Promise<Array<Array<any>>>} Promise of an array of parsed entries.
