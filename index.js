@@ -520,7 +520,11 @@ class CronEngine {
         .sort((a, b) => a[0] - b[0])
         .forEach(([id, { schedule, task, args, options }]) => {
             if (typeof task === 'function') {
-                setImmediate(task, id, schedule.expression, time, args);
+                try {
+                    setImmediate(task, id, schedule.expression, time, args);
+                } catch (err) {
+                    logError(`Failed to execute function "${task}" with arguments "${args}"`, err);
+                }
             } else {
                 // All arguments are passed as strings
                 let argv = [id.toString(), schedule.expression, time.toString()];
@@ -531,7 +535,11 @@ class CronEngine {
                 if (options?.fork) {
                     fork(task, argv, options);
                 } else {
-                    new Worker(task, { argv }, options);
+                    try {
+                        new Worker(task, { argv }, options);
+                    } catch (err) {
+                        logError(`Failed to execute module "${task}" with arguments "${args}"`, err);
+                    }
                 }
             }
         });
@@ -811,7 +819,7 @@ function logError(msg, err) {
         if (err?.message) stderr.write(`. ${err.message}`);
         if (err?.cause?.message) stderr.write(`; cause: ${err.cause.message}`);
     }
-    stdout.write(EOL);
+    stderr.write(EOL);
 }
 
 /**
