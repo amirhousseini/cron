@@ -1,11 +1,11 @@
 {
   "name": "ah-cron",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Implementation of a cron-like service",
   "main": "index.js",
   "scripts": {
     "test": "node --test '**/*.test.js'",
-    "testService": "node 'tests/CrontabService.run.js'",
+    "testService": "node 'tests/CronService.run.js'",
     "testValidate": "node 'tests/validateCrontabFile.run.js' samples/sampleCrontab",
     "buildImage": "docker build --no-cache -f docker/Dockerfile -t plumpudding/ah-cron docker"
   },

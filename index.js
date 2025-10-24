@@ -535,9 +535,11 @@ class CronEngine {
                 if (options?.fork) {
                     fork(task, argv, options);
                 } else {
+                    logMessage('Launching a worke thread');
                     try {
                         new Worker(task, { argv }, options);
                     } catch (err) {
+                        logMessage('Exception thrown');
                         logError(`Failed to execute module "${task}" with arguments "${args}"`, err);
                     }
                 }
@@ -599,12 +601,12 @@ class CronEngine {
 }
 
 /**
- * CrontabService is a background service executing recurring scheduled tasks specified
+ * CronService is a background service executing recurring scheduled tasks specified
  * through a crontab-like file (@see @function parseCrontabFile and @class CronEngine).
  * The service can be started and stopped at any time, starts immediately by default.
  * All operations are logged to standard output. All errors are logged to standard error.
  */
-class CrontabService {
+class CronService {
 
     #path;
     #options;
@@ -613,7 +615,7 @@ class CrontabService {
     #engine;
 
     /**
-     * Create a CrontabService object.
+     * Create a CronService object.
      * The option "delayStart" specifies whether the service must start immediately or not.
      * The option "locationPaths" provides supplemental paths for looking up the crontab file and the module files.
      * The option "monitorCrontab" specifies whether the crontab file should be monitored for changes,
@@ -775,7 +777,7 @@ class CrontabService {
             return;
         }
         let locationPaths = process.env.LOCATION_PATHS;
-        new CrontabService(crontabPath, { locationPaths });
+        new CronService(crontabPath, { locationPaths });
     }
 
 }
@@ -1240,6 +1242,6 @@ module.exports = {
     CronSchedule, CronScheduleError, DefaultSchedule, ScheduleAlias,
     CronEngine,
     parseCrontabFile, parseCommandLine, validateCrontabFile, 
-    CrontabService,
+    CronService,
     monitorFile
 };
