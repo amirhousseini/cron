@@ -520,28 +520,25 @@ class CronEngine {
         .sort((a, b) => a[0] - b[0])
         .forEach(([id, { schedule, task, args, options }]) => {
             if (typeof task === 'function') {
+                logMessage(`Job ${id} with schedule "${schedule.expression}", execution in current thread of function "${task.name}" with arguments "${args}"`);
                 try {
                     setImmediate(task, id, schedule.expression, time, args);
                 } catch (err) {
-                    logError(`Failed to execute function "${task}" with arguments "${args}"`, err);
+                    logError(`Job $id failed`, err);
                 }
             } else {
-                // All arguments are passed as strings
+                // Assemble standard data into an array, converting to string if necessary
                 let argv = [id.toString(), schedule.expression, time.toString()];
-                // Add optional argument, stringifying objects to JSON.
+                // Append optional arguments if present, converting to JSON or string depending on the type.
                 if (args) {
                     argv.push(typeof args === 'object' ? JSON.stringify(args) : args.toString());
                 }
                 if (options?.fork) {
-                    fork(task, argv, options);
+                    logMessage(`Job ${id} with schedule "${schedule.expression}", execution in forked process of module "${task}" with arguments "${args}"`);
+                    fork(task, argv, options).on('error', (err) => logError(`Job $id failed`, err));
                 } else {
-                    logMessage('Launching a worke thread');
-                    try {
-                        new Worker(task, { argv }, options);
-                    } catch (err) {
-                        logMessage('Exception thrown');
-                        logError(`Failed to execute module "${task}" with arguments "${args}"`, err);
-                    }
+                    logMessage(`Job ${id} with schedule "${schedule.expression}", execution in worker thread of module "${task}" with arguments "${args}"`);
+                    new Worker(task, { argv }, options).on('error', (err) => logError(`Job $id failed`, err));
                 }
             }
         });
@@ -837,7 +834,7 @@ function logError(msg, err) {
  * Crontab entries must have the following format:
  * 
  *      +----------------------------------  Schedule expression
- *      |       +--------------------------  Optional fork flag
+ *      |       +--------------------------  Optional execution mode flag, F for fork, W for worker thread (default to F)
  *      |       |         +----------------  Module path
  *      |       |         |            +--   Optional arguments
  *      |       |         |            |
@@ -877,10 +874,10 @@ async function parseCrontabFile(path) {
                 tokens = tokens.slice(5);
             }
 
-            // Consume the optional flag 
-            let flag;
+            // Consume the optional execution mode flag 
+            let flag = 'F';
             if (tokens[0]?.length == 1) {
-                flag = tokens.shift()
+                flag = tokens.shift();
             }
 
             // Consume the tokens making up the module path
@@ -904,7 +901,7 @@ async function parseCrontabFile(path) {
  *  - {Array<any>} optional arguments.
  * @param {Array<any>} entry Entry
  * @param {FileLocator} fileLocator Optional file locator for resolving file paths.
- * @return {Objec} The entry with the schedule expression replaced by a CronSchedule object,
+ * @return {Object} The entry with the schedule expression replaced by a CronSchedule object,
  *  and the path resolved against the file locator.
  * @throws {CronScheduleError} if the schedule expression is invalid.
  * @throws {ResolutionError} if the module is not found.
@@ -915,7 +912,7 @@ function validateCrontabEntry(entry, fileLocator = new FileLocator()) {
     // Validate schedule
     schedule = new CronSchedule(schedule);
     // Validate flag
-    if (flag != undefined && flag != 'F') {
+    if (flag !== 'F' && flag !== 'W') {
         throw new Error(`Invalid fork flag "${flag}" at crontab line ${lineNbr}`);
     }
     // Validate task

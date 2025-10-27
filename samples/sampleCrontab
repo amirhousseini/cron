@@ -1,11 +1,11 @@
 # This is a comment for the first job
-* * * * *               sampleModule.js execution_in_worker_thread 'more\tdata\t1' 
+* * * * *           W   sampleModule.js execution_in_worker_thread 'more\tdata\t1' 
 
 # This is a comment for the second job
 */3 * * * *         F   ./sampleModule.js execution_in_forked_process more-data-2
 
 # This is a comment for the third job
-*/5 * * * *         F   ./sampleModule.js 'execution in forked process' more-data-3
+*/5 * * * *             ./sampleModule.js 'execution in forked process' more-data-3
 
 # This is a comment for the fourth job
-1-59/2 * * * *          ./sampleModule.js "execution in worker thread" more-data-4
+1-59/2 * * * *      W   ./sampleModule.js "execution in worker thread" more-data-4
