@@ -7,7 +7,7 @@
 
 const { CronService } = require('..');
 
-const delayMillis = 5 * 60 * 1000;
+const delayMillis = 5 * 60 * 1_000;
 const SampleCrontab = 'sampleCrontab';
 
 let service = new CronService(SampleCrontab, { locationPaths: '../samples' });

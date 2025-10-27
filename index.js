@@ -36,7 +36,7 @@ const ScheduleAlias = {
 /*
  * One minute in milliseconds
  */
-const OneMinute = 60 * 1000;
+const OneMinute = 60*1_000;
 
 /**
  * Number of fields in schedule expressions
@@ -524,7 +524,7 @@ class CronEngine {
                 try {
                     setImmediate(task, id, schedule.expression, time, args);
                 } catch (err) {
-                    logError(`Job $id failed`, err);
+                    logError(`Job ${id} failed`, err);
                 }
             } else {
                 // Assemble standard data into an array, converting to string if necessary
@@ -535,10 +535,10 @@ class CronEngine {
                 }
                 if (options?.fork) {
                     logMessage(`Job ${id} on schedule "${schedule.expression}": execution in forked process of module "${task}" with arguments "${args}"`);
-                    fork(task, argv, options).on('error', (err) => logError(`Job $id failed`, err));
+                    fork(task, argv, options);
                 } else {
                     logMessage(`Job ${id} on schedule "${schedule.expression}": execution in worker thread of module "${task}" with arguments "${args}"`);
-                    new Worker(task, { argv }, options).on('error', (err) => logError(`Job $id failed`, err));
+                    new Worker(task, { argv }, options).on('error', (err) => logError(`Job ${id} failed`, err));
                 }
             }
         });
@@ -809,14 +809,12 @@ function logMessage(msg) {
  */
 function logError(msg, err) {
     if (!arguments.length) {
-        stderr.write(`${localDateTimeString()} - ERROR> `);
+        stderr.write(`${localDateTimeString()} - ERROR> An unspecified error occurred`);
     } else if (arguments.length === 1 && msg instanceof Error) {
-        stderr.write(`${localDateTimeString()} - ERROR> ${msg.message}`);
-        if (msg?.cause?.message) stderr.write(`; cause: ${msg.cause.message}`);
+        stderr.write(`${localDateTimeString()} - ERROR> ${msg.stack}`);
     } else {
-        stderr.write(`${localDateTimeString()} - ERROR> ${msg}`);
-        if (err?.message) stderr.write(`. ${err.message}`);
-        if (err?.cause?.message) stderr.write(`; cause: ${err.cause.message}`);
+        stderr.write(`${localDateTimeString()} - ERROR> ${msg}${EOL}`);
+        stderr.write(`${err instanceof Error ? err.stack : err}`);
     }
     stderr.write(EOL);
 }
