@@ -520,7 +520,7 @@ class CronEngine {
         .sort((a, b) => a[0] - b[0])
         .forEach(([id, { schedule, task, args, options }]) => {
             if (typeof task === 'function') {
-                logMessage(`Job ${id} with schedule "${schedule.expression}", execution in current thread of function "${task.name}" with arguments "${args}"`);
+                logMessage(`Job ${id} on schedule "${schedule.expression}": execution in current thread of function "${task.name}" with arguments "${args}"`);
                 try {
                     setImmediate(task, id, schedule.expression, time, args);
                 } catch (err) {
@@ -534,10 +534,10 @@ class CronEngine {
                     argv.push(typeof args === 'object' ? JSON.stringify(args) : args.toString());
                 }
                 if (options?.fork) {
-                    logMessage(`Job ${id} with schedule "${schedule.expression}", execution in forked process of module "${task}" with arguments "${args}"`);
+                    logMessage(`Job ${id} on schedule "${schedule.expression}": execution in forked process of module "${task}" with arguments "${args}"`);
                     fork(task, argv, options).on('error', (err) => logError(`Job $id failed`, err));
                 } else {
-                    logMessage(`Job ${id} with schedule "${schedule.expression}", execution in worker thread of module "${task}" with arguments "${args}"`);
+                    logMessage(`Job ${id} on schedule "${schedule.expression}": execution in worker thread of module "${task}" with arguments "${args}"`);
                     new Worker(task, { argv }, options).on('error', (err) => logError(`Job $id failed`, err));
                 }
             }
