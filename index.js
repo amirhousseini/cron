@@ -810,11 +810,11 @@ function logMessage(msg) {
 function logError(msg, err) {
     if (!arguments.length) {
         stderr.write(`${localDateTimeString()} - ERROR> An unspecified error occurred`);
-    } else if (arguments.length === 1 && msg instanceof Error) {
+    } else if (msg instanceof Error) {
         stderr.write(`${localDateTimeString()} - ERROR> ${msg.stack}`);
     } else {
         stderr.write(`${localDateTimeString()} - ERROR> ${msg}${EOL}`);
-        stderr.write(`${err instanceof Error ? err.stack : err}`);
+        if (err) stderr.write(`${err instanceof Error ? err.stack : err}`);
     }
     stderr.write(EOL);
 }
@@ -942,28 +942,33 @@ function validateCrontabFile(path, options = { locationPaths: undefined }) {
                     validateCrontabEntry(entry, locator);
                     count++;
                 } catch (err) {
+                    stdout.write('ERROR> ');
                     if (err instanceof CronScheduleError) {
-                        stdout.write(`ERROR> Invalid schedule expression "${schedule}" at crontab line ${lineNbr}${EOL}`);
+                        stdout.write(`Invalid schedule expression "${schedule}" at crontab line ${lineNbr}`);
                     } else if (err instanceof ResolutionError) {
-                        stdout.write(`ERROR> Module at crontab line ${lineNbr} not found: ${path}${EOL}`);
+                        stdout.write(`Module at crontab line ${lineNbr} not found: ${path}`);
                     } else {
-                        stdout.write(`ERROR> ${err.message}${EOL}`);
+                        stdout.write(err.message);
                     }
+                    stdout.write(EOL);
                 }
             }
             stdout.write(`Crontab file "${path}"`);
             if (entries.length) {
-                stdout.write(` is ${entries.length === count ? "valid" : "invalid"}${EOL}`);
+                stdout.write(` is ${entries.length === count ? "valid" : "invalid"}`);
             } else {
-                stdout.write(` has no entries${EOL}`);
+                stdout.write(` has no entries`);
             }
+            stdout.write(EOL);
         })
     } catch (err) {
+        stdout.write('ERROR> ');
         if (err instanceof ResolutionError) {
-            stdout.write(`ERROR> Crontab file "${path}" not found${EOL}`);
+            stdout.write(`Crontab file "${path}" not found`);
         } else {
-            stdout.write(`ERROR> ${err.message}${EOL}`);
+            stdout.write(err.message);
         }
+        stdout.write(EOL);
         exit(1);
     }
 }
