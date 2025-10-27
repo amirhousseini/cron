@@ -1,6 +1,6 @@
 {
   "name": "ah-cron",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "description": "Implementation of a cron-like service",
   "main": "index.js",
   "scripts": {
