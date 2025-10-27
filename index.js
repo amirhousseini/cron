@@ -813,8 +813,8 @@ function logError(msg, err) {
     } else if (msg instanceof Error) {
         stderr.write(`${localDateTimeString()} - ERROR> ${msg.stack}`);
     } else {
-        stderr.write(`${localDateTimeString()} - ERROR> ${msg}${EOL}`);
-        if (err) stderr.write(`${err instanceof Error ? err.stack : err}`);
+        stderr.write(`${localDateTimeString()} - ERROR> ${msg}`);
+        if (err) stderr.write(`${EOL}${err instanceof Error ? err.stack : err}`);
     }
     stderr.write(EOL);
 }
